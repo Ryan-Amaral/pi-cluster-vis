@@ -68,8 +68,12 @@ while True:
         l = len(visDatas[uid]['mem_use'])
         axRam.plot(visDatas[uid]['mem_use'][max(0, l-maxX):l], 
             color=cols[uid], linestyle=lins[uid])
+        axRam.set_title('RAM Usage of Nodes')
+        axRam.set_ylabel('RAM (GB)')
+
         axCpu.plot(visDatas[uid]['cpu_use'][max(0, l-maxX):l], 
             color=cols[uid], linestyle=lins[uid])
+        axCpu.set_title('CPU Usage of Nodes')
     
     plt.draw()
     plt.pause(1)
