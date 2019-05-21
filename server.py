@@ -1,42 +1,76 @@
 import socket
 import json
 from _thread import start_new_thread
-from sense_hat import SenseHat
+#from sense_hat import SenseHat
 from optparse import OptionParser
+import matplotlib.pyplot as plt
 
 parser = OptionParser()
 parser.add_option('-i', '--ip', type='string', dest='ip', default='127.0.0.1')
 parser.add_option('-p', '--port', type='int', dest='port', default=5005)
+parser.add_option('-n', '--numNodes', type='int', dest='numNodes', default=15)
 (options, args) = parser.parse_args()
 
-sense = SenseHat()
-sense.clear()
+#sense = SenseHat()
+#sense.clear()
 
 #  temp = sense.get_temperature()
- 
-ip = '127.0.0.1' # set as contant for analysis node later
-port = 5005
 
-s = socket.socket()
-s.bind((ip, port))
-s.listen(20)
+def clientReceiver():
+    # create server
+    s = socket.socket()
+    s.bind((options.ip, options.port))
+    s.listen(options.numNodes)
 
-visDatas = {} # store all data
+    # keep main in here to accept connections    
+    cnt = 0
+    while True:
+        con, adr = s.accept()
+        start_new_thread(dataStream, (con, cnt))
+        cnt += 1
 
-def dataStream(con, adr):
-    
+visDatas = {} # store all data to visualize
+for i in range(options.numNodes):
+    visDatas[i] = {'mem_use':[], 'cpu_use':[]}
+
+# continually stream in data in separate threads
+def dataStream(con, uid):
     while True:
         data = con.recv(1024).decode('utf-8')
         if data == '':
             break
+
         mDict = json.loads(data)
-        mDict['addr'] = adr[0]
-        
-        print(str(adr) + ' :  ' + str(data))
-        print(jData['mem_use'])
-    
-    
+
+        visDatas[uid]['mem_use'].append(mDict['mem_use'])
+        visDatas[uid]['cpu_use'].append(mDict['cpu_use'])
+
+        print(mDict)
+
+start_new_thread(clientReceiver, ())
+
+# plotting stuff
+axRam = plt.subplot(2,1,1)
+axCpu = plt.subplot(2,1,2)
+
+# colors of lines
+cols = ['C'+str(i%10) for i in range(options.numNodes)]
+# styles of lines
+lins = ['-']*10 + ['--']*10 + ['-.']*10 # manually update if need more
+
+maxX = 20
+
+plt.ion() # for live update plot
 while True:
-    con, adr = s.accept()
-    start_new_thread(dataStream, (con, adr))
+    axRam.cla()
+    axCpu.cla()
+    for uid in range(options.numNodes):
+        l = len(visDatas[uid]['mem_use'])
+        axRam.plot(visDatas[uid]['mem_use'][max(0, l-maxX):l], 
+            color=cols[uid], linestyle=lins[uid])
+        axCpu.plot(visDatas[uid]['cpu_use'][max(0, l-maxX):l], 
+            color=cols[uid], linestyle=lins[uid])
+    
+    plt.draw()
+    plt.pause(1)
     

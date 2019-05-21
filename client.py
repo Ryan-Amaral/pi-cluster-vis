@@ -15,5 +15,5 @@ while True:
     data = {}
     data['mem_use'] = psutil.virtual_memory().used/1000000000
     data['cpu_use'] = psutil.cpu_percent(0.5)
-    s.send(json.dumps(data))
+    s.sendall(json.dumps(data).encode('utf-8'))
     
