@@ -4,6 +4,7 @@ from _thread import start_new_thread
 #from sense_hat import SenseHat
 from optparse import OptionParser
 import matplotlib.pyplot as plt
+import time
 
 parser = OptionParser()
 parser.add_option('-i', '--ip', type='string', dest='ip', default='127.0.0.1')
@@ -49,7 +50,10 @@ def dataStream(con, uid):
 
 start_new_thread(clientReceiver, ())
 
+
+plt.ion() # for live update plot
 # plotting stuff
+fig = plt.figure()
 axRam = plt.subplot(2,1,1)
 axCpu = plt.subplot(2,1,2)
 
@@ -59,8 +63,6 @@ cols = ['C'+str(i%10) for i in range(options.numNodes)]
 lins = ['-']*10 + ['--']*10 + ['-.']*10 # manually update if need more
 
 maxX = 20
-
-plt.ion() # for live update plot
 while True:
     axRam.cla()
     axCpu.cla()
@@ -74,7 +76,8 @@ while True:
         axCpu.plot(visDatas[uid]['cpu_use'][max(0, l-maxX):l], 
             color=cols[uid], linestyle=lins[uid])
         axCpu.set_title('CPU Usage of Nodes')
-    
+
     plt.draw()
-    plt.pause(1)
+    fig.canvas.start_event_loop(1)
+    #plt.pause(1)
     
