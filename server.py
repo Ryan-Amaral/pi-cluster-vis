@@ -83,13 +83,13 @@ while True:
     axRam.set_ylabel('RAM (GB)')
     axRam.get_xaxis().set_visible(False)
     axRam.legend(loc='upper left')
-    axRam.set_ylim(0,1)
+    axRam.set_ylim(0,1.05)
     
     axCpu.set_title('CPU Usage of Nodes (4 Cores)')
     axCpu.set_ylabel('CPU %')
     axCpu.get_xaxis().set_visible(False)
     axCpu.legend(loc='upper left')
-    axCpu.set_ylim(0,100)
+    axCpu.set_ylim(0,105)
     
     
     
