@@ -23,26 +23,25 @@ def clientReceiver():
     s.bind((options.ip, options.port))
     s.listen(options.numNodes)
 
-    # keep main in here to accept connections    
-    cnt = 0
+    # keep main in here to accept connections
     while True:
-        con, adr = s.accept()
-        start_new_thread(dataStream, (con, cnt))
-        cnt += 1
+        con, _ = s.accept()
+        start_new_thread(dataStream, (con,))
 
 visDatas = {} # store all data to visualize
-for i in range(options.numNodes):
-    visDatas[i] = {'mem_use':[], 'cpu_use':[]}
 
 # continually stream in data in separate threads
-def dataStream(con, uid):
+def dataStream(con):
     while True:
         data = con.recv(1024).decode('utf-8')
         if data == '':
             break
 
         mDict = json.loads(data)
-
+    
+        uid = mDict['uid']
+        if uid not in visDatas:
+            visDatas[uid] = {'mem_use':[], 'cpu_use':[]}
         visDatas[uid]['mem_use'].append(mDict['mem_use'])
         visDatas[uid]['cpu_use'].append(mDict['cpu_use'])
 
@@ -66,18 +65,33 @@ maxX = 20
 while True:
     axRam.cla()
     axCpu.cla()
-    for uid in range(options.numNodes):
+    for i, uid in enumerate(list(visDatas.keys())):
         l = len(visDatas[uid]['mem_use'])
         axRam.plot(visDatas[uid]['mem_use'][max(0, l-maxX):l], 
-            color=cols[uid], linestyle=lins[uid])
-        axRam.set_title('RAM Usage of Nodes')
-        axRam.set_ylabel('RAM (GB)')
+            color=cols[i], linestyle=lins[i], label=uid)
 
         axCpu.plot(visDatas[uid]['cpu_use'][max(0, l-maxX):l], 
-            color=cols[uid], linestyle=lins[uid])
-        axCpu.set_title('CPU Usage of Nodes')
-
+            color=cols[i], linestyle=lins[i], label=uid)
+            
+        if len(visDatas[uid]['mem_use']) > maxX:
+            visDatas[uid]['mem_use'] = visDatas[uid]['mem_use'][len(visDatas[uid]['mem_use'])-20:]
+        if len(visDatas[uid]['cpu_use']) > maxX:
+            visDatas[uid]['cpu_use'] = visDatas[uid]['cpu_use'][len(visDatas[uid]['cpu_use'])-20:]
+    
+    axRam.set_title('RAM Usage of Nodes')
+    axRam.set_ylabel('RAM (GB)')
+    axRam.get_xaxis().set_visible(False)
+    axRam.legend(loc='upper left')
+    axRam.set_ylim(0,4)
+    
+    axCpu.set_title('CPU Usage of Nodes (4 Cores)')
+    axCpu.set_ylabel('CPU %')
+    axCpu.get_xaxis().set_visible(False)
+    axCpu.legend(loc='upper left')
+    axCpu.set_ylim(0,100)
+    
+    
+    
     plt.draw()
     fig.canvas.start_event_loop(1)
-    #plt.pause(1)
     
