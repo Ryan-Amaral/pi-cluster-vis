@@ -10,6 +10,7 @@ parser = OptionParser()
 parser.add_option('-i', '--ip', type='string', dest='ip', default='127.0.0.1')
 parser.add_option('-p', '--port', type='int', dest='port', default=5005)
 parser.add_option('-n', '--numNodes', type='int', dest='numNodes', default=15)
+parser.add_option('-u', '--update', type='float', dest='update', default=0.2)
 (options, args) = parser.parse_args()
 
 #sense = SenseHat()
@@ -93,5 +94,5 @@ while True:
     
     
     plt.draw()
-    fig.canvas.start_event_loop(1)
+    fig.canvas.start_event_loop(options.update)
     
